@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Log Collector — Настройки</title>
+  <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <svg class="logo" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="#3b82f6"/>
+        <path d="M7 8h10M7 12h6M7 16h8" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="title">Log Collector</div>
+        <div class="subtitle">Настройки сбора данных</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="row">
+        <div class="info">
+          <span class="name">Ссылка</span>
+          <span class="desc">URL текущей страницы</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sUrl" checked>
+          <span class="slider"></span>
+        </div>
+      </label>
+
+      <label class="row">
+        <div class="info">
+          <span class="name">Данные браузера</span>
+          <span class="desc">Название и версия браузера</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sBrowser" checked>
+          <span class="slider"></span>
+        </div>
+      </label>
+
+      <label class="row">
+        <div class="info">
+          <span class="name">Разрешение</span>
+          <span class="desc">Текущий размер viewport</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sViewport" checked>
+          <span class="slider"></span>
+        </div>
+      </label>
+
+      <div class="divider"></div>
+
+      <label class="row">
+        <div class="info">
+          <span class="name">LocalStorage</span>
+          <span class="desc">Содержимое localStorage страницы</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sLocalStorage">
+          <span class="slider"></span>
+        </div>
+      </label>
+
+      <label class="row">
+        <div class="info">
+          <span class="name">SessionStorage</span>
+          <span class="desc">Содержимое sessionStorage страницы</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sSessionStorage">
+          <span class="slider"></span>
+        </div>
+      </label>
+
+      <label class="row">
+        <div class="info">
+          <span class="name">Cookie</span>
+          <span class="desc">Cookie текущей страницы</span>
+        </div>
+        <div class="toggle">
+          <input type="checkbox" id="sCookies">
+          <span class="slider"></span>
+        </div>
+      </label>
+    </div>
+
+    <div id="savedMsg" class="saved-msg">Сохранено</div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

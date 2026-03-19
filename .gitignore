@@ -1,0 +1,14 @@
+HISTORY.MD
+*.zip
+.DS_Store
+.AppleDouble
+__MACOSX/
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+node_modules/
+*.log
+.claude/
