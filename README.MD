@@ -13,7 +13,6 @@
 | Размер viewport (разрешение) | ✓ |
 | LocalStorage | выкл |
 | SessionStorage | выкл |
-| Cookie | выкл |
 
 ---
 
@@ -47,11 +46,6 @@ LocalStorage (Ключей: 2):
 
 SessionStorage (Ключей: 1):
   draft: hello world
-
-Cookie (3):
-  session_id=abc123
-  _ga=GA1.2.xxx
-  lang=ru
 ```
 
 ---
@@ -68,6 +62,8 @@ Cookie (3):
 4. Выберите папку с расширением
 
 ### Firefox
+
+Требуется Firefox 121 или новее.
 
 1. Откройте `about:debugging#/runtime/this-firefox`
 2. Нажмите **«Загрузить временное дополнение»**
@@ -91,4 +87,4 @@ Cookie (3):
 
 ## Версия
 
-1.0.0
+1.1.0

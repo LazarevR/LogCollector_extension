@@ -8,10 +8,12 @@
 // ── Context menu setup ────────────────────────────────────────────────────
 
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id:       'lc-settings',
-    title:    'Настройки',
-    contexts: ['action']
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id:       'lc-settings',
+      title:    'Настройки',
+      contexts: ['action']
+    });
   });
 });
 
@@ -22,6 +24,8 @@ chrome.contextMenus.onClicked.addListener((info) => {
 });
 
 // ── Icon click → collect ──────────────────────────────────────────────────
+
+let _isCollecting = false;
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
@@ -34,10 +38,18 @@ chrome.action.onClicked.addListener(async (tab) => {
 
   if (!isInjectable) return;
 
-  const stored = await chrome.storage.sync.get('lcSettings');
-  const settings = { ...DEFAULTS, ...(stored.lcSettings || {}) };
+  if (_isCollecting) return;
+  _isCollecting = true;
 
-  _collectAll(tab.id, settings).catch(() => {});
+  try {
+    const stored = await chrome.storage.sync.get('lcSettings');
+    const settings = { ...DEFAULTS, ...(stored.lcSettings || {}) };
+    await _collectAll(tab.id, settings);
+  } catch (_e) {
+    /* already surfaced via error indicator inside _collectAll */
+  } finally {
+    _isCollecting = false;
+  }
 });
 
 // ── Defaults (mirrored in settings.js) ───────────────────────────────────
@@ -47,7 +59,6 @@ const DEFAULTS = {
   browser:        true,
   viewport:       true,
   localStorage:   false,
-  cookies:        false,
   sessionStorage: false
 };
 
@@ -128,23 +139,6 @@ async function _collectAll(tabId, settings) {
     }
   }
 
-  if (settings.cookies) {
-    try {
-      const cookies = await chrome.cookies.getAll({ url });
-      lines.push('');
-      lines.push('Cookie (' + cookies.length + '):');
-      if (cookies.length === 0) {
-        lines.push('  (нет)');
-      } else {
-        for (const c of cookies) {
-          lines.push('  ' + c.name + '=' + c.value);
-        }
-      }
-    } catch (e) {
-      errors.push('Cookies: ' + e.message);
-    }
-  }
-
   // Write to clipboard via page context
   const text = lines.join('\n');
   try {
@@ -158,17 +152,16 @@ async function _collectAll(tabId, settings) {
   }
 
   // Show page indicator
-  const indicatorFn = errors.length === 0 ? _showSuccessIndicator : _showErrorIndicator;
+  const indicatorKind = errors.length === 0 ? 'success' : 'error';
   chrome.tabs.sendMessage(tabId, {
     action: errors.length === 0 ? 'showSuccess' : 'showError'
   }).catch(() => {
     chrome.scripting.executeScript({
       target: { tabId },
-      func:   indicatorFn
+      func:   _showIndicator,
+      args:   [indicatorKind]
     }).catch(() => {});
   });
-
-  return { text, errors };
 }
 
 
@@ -278,7 +271,7 @@ async function _writeToClipboard(text) {
   }
 }
 
-function _showSuccessIndicator() {
+function _showIndicator(kind) {
   document.getElementById('__lc_ind__')?.remove();
   document.getElementById('__lc_ind_styles__')?.remove();
   const style = document.createElement('style');
@@ -287,46 +280,29 @@ function _showSuccessIndicator() {
     '@keyframes __lc_pop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}' +
     '@keyframes __lc_out{to{opacity:0;transform:scale(0.85)}}';
   document.head.appendChild(style);
-  const el = document.createElement('div');
-  el.id = '__lc_ind__';
-  Object.assign(el.style, {
-    all: 'initial', position: 'fixed', bottom: '20px', right: '20px',
-    width: '50px', height: '50px', borderRadius: '50%',
-    background: 'rgba(34,197,94,0.92)', display: 'flex',
-    alignItems: 'center', justifyContent: 'center', zIndex: '2147483647',
-    backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-    boxShadow: '0 0 18px 8px rgba(34,197,94,0.45), 0 2px 8px rgba(0,0,0,0.15)',
-    animation: '__lc_pop 0.35s cubic-bezier(0.16,1,0.3,1) forwards'
-  });
-  el.innerHTML = '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><polyline points="5,13 11,19 21,7" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  document.body.appendChild(el);
-  setTimeout(() => {
-    el.style.animation = '__lc_out 0.3s ease forwards';
-    setTimeout(() => el.remove(), 320);
-  }, 2000);
-}
 
-function _showErrorIndicator() {
-  document.getElementById('__lc_ind__')?.remove();
-  document.getElementById('__lc_ind_styles__')?.remove();
-  const style = document.createElement('style');
-  style.id = '__lc_ind_styles__';
-  style.textContent =
-    '@keyframes __lc_pop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}' +
-    '@keyframes __lc_out{to{opacity:0;transform:scale(0.85)}}';
-  document.head.appendChild(style);
+  const isSuccess = kind === 'success';
+  const color  = isSuccess ? 'rgba(34,197,94,0.92)' : 'rgba(239,68,68,0.92)';
+  const shadow = isSuccess
+    ? '0 0 18px 8px rgba(34,197,94,0.45), 0 2px 8px rgba(0,0,0,0.15)'
+    : '0 0 18px 8px rgba(239,68,68,0.45), 0 2px 8px rgba(0,0,0,0.15)';
+  const icon = isSuccess
+    ? '<polyline points="5,13 11,19 21,7" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+    : '<line x1="7" y1="7" x2="19" y2="19" stroke="white" stroke-width="2.8" stroke-linecap="round"/>' +
+      '<line x1="19" y1="7" x2="7" y2="19" stroke="white" stroke-width="2.8" stroke-linecap="round"/>';
+
   const el = document.createElement('div');
   el.id = '__lc_ind__';
   Object.assign(el.style, {
     all: 'initial', position: 'fixed', bottom: '20px', right: '20px',
     width: '50px', height: '50px', borderRadius: '50%',
-    background: 'rgba(239,68,68,0.92)', display: 'flex',
+    background: color, display: 'flex',
     alignItems: 'center', justifyContent: 'center', zIndex: '2147483647',
     backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-    boxShadow: '0 0 18px 8px rgba(239,68,68,0.45), 0 2px 8px rgba(0,0,0,0.15)',
+    boxShadow: shadow,
     animation: '__lc_pop 0.35s cubic-bezier(0.16,1,0.3,1) forwards'
   });
-  el.innerHTML = '<svg width="26" height="26" viewBox="0 0 26 26" fill="none"><line x1="7" y1="7" x2="19" y2="19" stroke="white" stroke-width="2.8" stroke-linecap="round"/><line x1="19" y1="7" x2="7" y2="19" stroke="white" stroke-width="2.8" stroke-linecap="round"/></svg>';
+  el.innerHTML = '<svg width="26" height="26" viewBox="0 0 26 26" fill="none">' + icon + '</svg>';
   document.body.appendChild(el);
   setTimeout(() => {
     el.style.animation = '__lc_out 0.3s ease forwards';

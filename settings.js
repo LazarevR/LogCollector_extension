@@ -3,8 +3,7 @@ const DEFAULTS = {
   browser:        true,
   viewport:       true,
   localStorage:   false,
-  sessionStorage: false,
-  cookies:        false
+  sessionStorage: false
 };
 
 const toggles = {
@@ -12,8 +11,7 @@ const toggles = {
   browser:        document.getElementById('sBrowser'),
   viewport:       document.getElementById('sViewport'),
   localStorage:   document.getElementById('sLocalStorage'),
-  sessionStorage: document.getElementById('sSessionStorage'),
-  cookies:        document.getElementById('sCookies')
+  sessionStorage: document.getElementById('sSessionStorage')
 };
 
 const savedMsg = document.getElementById('savedMsg');
